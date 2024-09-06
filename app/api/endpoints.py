@@ -8,9 +8,16 @@ from app.core.database import get_db
 
 router = APIRouter()
 
-
-@router.post("/v1/api/signup", response_model=Token)
-def signup(user: UserCreate, db: Session = Depends(get_db)):
+@router.post("/v1/api/signup", response_model=Token, tags=["auth"])
+async def signup(user: UserCreate, db: Session = Depends(get_db)):
+    """
+    Sign up a new user.
+    
+    - **email**: user's email address
+    - **password**: user's password
+    
+    Returns an access token upon successful registration.
+    """
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -20,17 +27,24 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     access_token = create_access_token(data={"sub": db_user.email})
-
+    
     return {"access_token": access_token, "token_type": "bearer"}
 
-
-@router.post("/v1/api/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@router.post("/v1/api/login", response_model=Token, tags=["auth"])
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Authenticate a user and return an access token.
+    
+    - **username**: user's email address
+    - **password**: user's password
+    
+    Returns an access token upon successful authentication.
+    """
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user:
         raise HTTPException(status_code=400, detail="Invalid credentials")
     if not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid password")
     access_token = create_access_token(data={"sub": user.email})
-
+    
     return {"access_token": access_token, "token_type": "bearer"}

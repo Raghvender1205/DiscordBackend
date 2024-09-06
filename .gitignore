@@ -1,0 +1,9 @@
+.idea/
+
+# Ignore all __pycache__ directories
+__pycache__/
+
+# Ignore Python compiled files
+*.pyc
+*.pyo
+*.pyd
